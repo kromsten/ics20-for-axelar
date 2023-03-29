@@ -255,51 +255,52 @@ mod test {
 
     #[test]
     fn proper_checks_on_execute_cw20() {
-        let send_channel = "channel-15";
-        let cw20_addr = "my-token";
-        let cw20_hash = "my-token-hash";
-        let mut deps = setup(
-            &["channel-3", send_channel],
-            &[(cw20_addr, cw20_hash, 123456)],
-        );
+      let send_channel = "channel-15";
+      let cw20_addr = "my-token";
+      let cw20_hash = "my-token-hash";
+      let mut deps = setup(
+          &["channel-3", send_channel],
+          &[(cw20_addr, cw20_hash, 123456)],
+      );
 
-        let transfer = TransferMsg {
-            channel: send_channel.to_string(),
-            remote_address: "foreign-address".to_string(),
-            timeout: 7777,
-        };
-        let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
-            sender: "my-account".into(),
-            amount: Uint128::new(888777666),
-            msg: to_binary(&transfer).unwrap(),
-        });
+      let transfer = TransferMsg {
+          channel: send_channel.to_string(),
+          remote_address: "foreign-address".to_string(),
+          timeout: 7777,
+      };
+      let msg = ExecuteMsg::Receive(Cw20ReceiveMsg {
+          sender: "my-account".into(),
+          amount: Uint128::new(20000000000000000000),
+          msg: to_binary(&transfer).unwrap(),
+      });
 
-        // works with proper funds
-        let info = mock_info(cw20_addr, &[]);
-        let res = execute(deps.as_mut(), mock_env(), info, msg.clone()).unwrap();
-        assert_eq!(1, res.messages.len());
-        assert_eq!(res.messages[0].gas_limit, None);
-        if let CosmosMsg::Ibc(IbcMsg::SendPacket {
-            channel_id,
-            data,
-            timeout,
-        }) = &res.messages[0].msg
-        {
-            let expected_timeout = mock_env().block.time.plus_seconds(7777);
-            assert_eq!(timeout, &expected_timeout.into());
-            assert_eq!(channel_id.as_str(), send_channel);
-            let msg: Ics20Packet = from_binary(data).unwrap();
-            assert_eq!(msg.amount, Uint128::new(888777666));
-            assert_eq!(msg.denom, format!("cw20:{}", cw20_addr));
-            assert_eq!(msg.sender.as_str(), "my-account");
-            assert_eq!(msg.receiver.as_str(), "foreign-address");
-        } else {
-            panic!("Unexpected return message: {:?}", res.messages[0]);
-        }
+      // works with proper funds
+      let info = mock_info(cw20_addr, &[]);
+      let res = execute(deps.as_mut(), mock_env(), info, msg.clone()).unwrap();
+      assert_eq!(2, res.messages.len());
+      assert_eq!(res.messages[0].gas_limit, None);
+      if let CosmosMsg::Ibc(IbcMsg::SendPacket {
+          channel_id,
+          data,
+          timeout,
+      }) = &res.messages[0].msg
+      {
+          let expected_timeout = mock_env().block.time.plus_seconds(7777);
+          assert_eq!(timeout, &expected_timeout.into());
+          assert_eq!(channel_id.as_str(), send_channel);
+          let msg: Ics20Packet = from_binary(data).unwrap();
+          assert_eq!(msg.amount, Uint128::new(20000000000000000000));
+          assert_eq!(msg.denom, "wasm.cosmos2contract/channel-15/uscrt");
+          assert_eq!(msg.sender.as_str(), "my-account");
+          assert_eq!(msg.receiver.as_str(), "foreign-address");
+      } else {
+          panic!("Unexpected return message: {:?}", res.messages[0]);
+      }
 
-        // reject with tokens funds
-        let info = mock_info("foobar", &coins(1234567, "ucosm"));
-        let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
-        assert_eq!(err, ContractError::Payment(PaymentError::NonPayable {}));
-    }
+      // reject with tokens funds
+      let info = mock_info("foobar", &coins(1234567, "ucosm"));
+      let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+      assert_eq!(err, ContractError::Payment(PaymentError::NonPayable {}));
+  }
+
 }
