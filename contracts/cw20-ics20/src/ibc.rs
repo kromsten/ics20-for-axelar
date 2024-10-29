@@ -251,8 +251,8 @@ fn do_ibc_packet_receive(
         .add_attribute("receiver", msg.receiver)
         .add_attribute("denom", denom)
         .add_attribute("amount", msg.amount)
-        .add_attribute("success", "true")
-        .add_attribute("memo", msg.memo);
+        .add_attribute("memo", msg.memo)
+        .add_attribute("success", "true");
 
     Ok(res)
 }
