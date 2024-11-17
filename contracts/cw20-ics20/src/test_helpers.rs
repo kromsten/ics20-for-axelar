@@ -12,7 +12,7 @@ use cosmwasm_std::{
 
 use crate::msg::{AllowMsg, InitMsg};
 
-pub const DEFAULT_TIMEOUT: u64 = 3600; // 1 hour,
+pub const _DEFAULT_TIMEOUT: u64 = 3600; // 1 hour,
 pub const CONTRACT_PORT: &str = "ibc:wasm1234567890abcdef";
 pub const REMOTE_PORT: &str = "transfer";
 pub const CONNECTION_ID: &str = "connection-2";

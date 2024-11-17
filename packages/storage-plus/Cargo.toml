@@ -12,7 +12,9 @@ homepage = "https://cosmwasm.com"
 # default = ["iterator"]
 default = []
 iterator = ["cosmwasm-std/iterator"]
-macro = ["cw-storage-macro"]
+macro = [
+    #"cw-storage-macro"
+]
 
 [lib]
 # See https://bheisler.github.io/criterion.rs/book/faq.html#cargo-bench-gives-unrecognized-option-errors-for-valid-command-line-options
@@ -22,7 +24,7 @@ bench = false
 cosmwasm-std = { git = "https://github.com/scrtlabs/cosmwasm", branch = "secret" }
 schemars = "0.8.1"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
-cw-storage-macro = { version = "0.14.0", optional = true, path = "../storage-macro" }
+#cw-storage-macro = { version = "0.14.0", optional = true, path = "../storage-macro" }
 
 [dev-dependencies]
 criterion = { version = "0.3", features = ["html_reports"] }

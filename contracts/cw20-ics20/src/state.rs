@@ -22,6 +22,7 @@ pub const CHANNEL_STATE: Map<(&str, &str), ChannelState> = Map::new("channel_sta
 pub const ALLOW_LIST: Map<&str, AllowInfo> = Map::new("allow_list");
 pub const ALLOW_LIST_ADDR_2_DENOM: Map<String, String> = Map::new("allow_list_addr_2_denom");
 
+
 #[derive(Serialize, Deserialize, Clone, Eq, PartialEq, JsonSchema, Debug, Default)]
 pub struct ChannelState {
     pub outstanding: Uint128,

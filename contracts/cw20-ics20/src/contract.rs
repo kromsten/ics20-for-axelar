@@ -248,7 +248,7 @@ mod test {
       let send_channel = "channel-15";
       let cw20_addr = "my-token";
       let cw20_hash = "my-token-hash";
-      let mut deps = setup(
+      let _deps = setup(
           &["channel-3", send_channel],
           &[(cw20_addr, cw20_hash, 123456)],
       );
@@ -277,6 +277,7 @@ mod test {
           sender: "my-account".into(),
           amount: Uint128::new(20000000000000000000),
           msg: to_binary(&transfer).unwrap(),
+          memo: None,
       });
 
       // works with proper funds

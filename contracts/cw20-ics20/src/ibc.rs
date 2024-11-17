@@ -374,7 +374,7 @@ mod test {
     use crate::contract::execute;
     use crate::msg::{ExecuteMsg, TransferMsg};
     use cosmwasm_std::testing::{mock_env, mock_info};
-    use cosmwasm_std::{to_vec, IbcEndpoint, IbcMsg, IbcTimeout, Timestamp};
+    use cosmwasm_std::{to_vec, IbcEndpoint, Timestamp};
     use cw20::Cw20ReceiveMsg;
 
     #[test]
@@ -398,7 +398,7 @@ mod test {
             "wasm1fucynrfkrt684pm8jrt8la5h2csvs5cnldcgqc",
         );
         // Example message generated from the SDK
-        let expected = r#"{"amount":"12345","denom":"ucosm","receiver":"wasm1fucynrfkrt684pm8jrt8la5h2csvs5cnldcgqc","sender":"cosmos1zedxv25ah8fksmg2lzrndrpkvsjqgk4zt5ff7n"}"#;
+        let expected = r#"{"amount":"12345","denom":"ucosm","receiver":"wasm1fucynrfkrt684pm8jrt8la5h2csvs5cnldcgqc","sender":"cosmos1zedxv25ah8fksmg2lzrndrpkvsjqgk4zt5ff7n","memo":""}"#;
 
         let encdoded = String::from_utf8(to_vec(&packet).unwrap()).unwrap();
         assert_eq!(expected, encdoded.as_str());
@@ -438,6 +438,7 @@ mod test {
             amount: amount.into(),
             sender: "remote-sender".to_string(),
             receiver: receiver.to_string(),
+            memo: "".to_string(),
         };
         print!("Packet denom: {}", &data.denom);
         IbcPacket::new(
@@ -477,7 +478,7 @@ mod test {
         let res = ibc_packet_receive(deps.as_mut(), mock_env(), msg).unwrap();
         assert!(res.messages.is_empty());
         let ack: Ics20Ack = from_binary(&res.acknowledgement).unwrap();
-        let no_funds = Ics20Ack::Error(ContractError::InsufficientFunds {}.to_string());
+        let no_funds = Ics20Ack::Error(ContractError::NoLocalTokens {}.to_string());
         assert_eq!(ack, no_funds);
 
         // we send some cw20 tokens over
@@ -490,10 +491,11 @@ mod test {
             sender: "local-sender".to_string(),
             amount: Uint128::new(987654321),
             msg: to_binary(&transfer).unwrap(),
+            memo: None,
         });
         let info = mock_info(cw20_addr, &[]);
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(1, res.messages.len());
+        assert_eq!(2, res.messages.len());
         // let expected = Ics20Packet {
         //     denom: cw20_denom.into(),
         //     amount: Uint128::new(987654321),
