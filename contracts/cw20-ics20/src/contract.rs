@@ -1,8 +1,7 @@
 #[cfg(not(feature = "library"))]
 use cosmwasm_std::entry_point;
 use cosmwasm_std::{
-    from_binary, to_binary, Addr, Binary, Deps, DepsMut, Env, IbcMsg, MessageInfo, Response,
-    StdResult, WasmMsg, Uint128, SubMsg
+    from_binary, to_binary, Addr, Binary, Deps, DepsMut, Empty, Env, IbcMsg, MessageInfo, Response, StdResult, SubMsg, Uint128, WasmMsg
 };
 
 use cw2::set_contract_version;
@@ -210,6 +209,11 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
         QueryMsg::Allowed { denom } => to_binary(&query_allowed(deps, denom)?),
         QueryMsg::Admin {} => to_binary(&ADMIN.query_admin(deps)?),
     }
+}
+
+#[cfg_attr(not(feature = "library"), entry_point)]
+pub fn migrate(_: DepsMut, _: Env, _: Empty) -> Result<Response, ContractError> {
+    Ok(Response::default())
 }
 
 fn query_allowed(deps: Deps, denom: String) -> StdResult<AllowedResponse> {

@@ -2,10 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
-    attr, entry_point, from_binary, to_binary, Binary, CosmosMsg, Deps, DepsMut, Env,
-    IbcBasicResponse, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
-    IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
-    IbcReceiveResponse, Reply, Response, SubMsg, SubMsgResult, Uint128, WasmMsg,
+    attr, entry_point, from_binary, to_binary, Binary, CosmosMsg, Deps, DepsMut, Env, IbcBasicResponse, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcEndpoint, IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, Reply, Response, SubMsg, SubMsgResult, Uint128, WasmMsg
 };
 
 
@@ -208,6 +205,39 @@ pub fn ibc_packet_receive(
 }
 
 
+// Returns local denom if the denom is an encoded voucher from the expected endpoint
+// Otherwise, error
+fn parse_voucher_denom<'a>(
+    voucher_denom: &'a str,
+    remote_endpoint: &IbcEndpoint,
+) -> Result<&'a str, ContractError> {
+    let split_denom: Vec<&str> = voucher_denom.splitn(3, '/').collect();
+    if split_denom.len() != 3 {
+        return Err(ContractError::NoForeignTokens {});
+    }
+    // a few more sanity checks
+    if split_denom[0] != remote_endpoint.port_id {
+        return Err(ContractError::FromOtherPort {
+            port: split_denom[0].into(),
+        });
+    }
+    if split_denom[1] != remote_endpoint.channel_id {
+        return Err(ContractError::FromOtherChannel {
+            channel: split_denom[1].into(),
+        });
+    }
+
+/*     if !split_denom[2].starts_with("cw20:secret1") {
+        return Err(ContractError::OnlySecretTokens {});
+    }
+
+    let token_address = split_denom[2].get(5..).unwrap();
+ */
+    Ok(split_denom[2])
+}
+
+
+
 // this does the work of ibc_packet_receive, we wrap it to turn errors into acknowledgements
 fn do_ibc_packet_receive(
     deps: DepsMut,
@@ -324,8 +354,9 @@ fn on_packet_failure(
     // undo the balance update on failure (as we pre-emptively added it on send)
     // reduce_channel_balance(deps.storage, &packet.src.channel_id, &msg.denom, msg.amount)?;
 
+    let denom = parse_voucher_denom(&msg.denom, &packet.src)?;
     //let to_send = Amount::from_parts(msg.denom.clone(), msg.amount);
-    let allow_info = check_allow_list(deps.as_ref(), &msg.denom.clone())?;
+    let allow_info = check_allow_list(deps.as_ref(), &denom.to_string())?;
     let send = mint_amount(msg.amount, allow_info.contract, allow_info.code_hash, msg.sender.clone());
     let mut submsg = SubMsg::reply_on_error(send, ACK_FAILURE_ID);
     submsg.gas_limit = allow_info.gas_limit;
